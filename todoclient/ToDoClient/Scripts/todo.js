@@ -1,23 +1,35 @@
 ﻿var tasksManager = function() {
 
-    // appends a row to the tasks table.
+    // appends a row to the tasks list.
     // @parentSelector: selector to append a row to.
-    // @obj: task object to append.
-    var appendRow = function(parentSelector, obj) {
-        var tr = $("<tr data-id='" + obj.ToDoId + "'></tr>");
-        tr.append("<td><input type='checkbox' class='completed' " + (obj.IsCompleted ? "checked" : "") + "/></td>");
-        tr.append("<td class='name' >" + obj.Name + "</td>");
-        tr.append("<td><input type='button' class='delete-button' value='Delete' /></td>");
-        $(parentSelector).append(tr);
+    // @item: task object to append.
+    var appendItem = function (parentSelector, item) {
+        var i = $("<li class='ui-state-default' data-id='" + item.ToDoId + "'></li>")
+        i.append("<div class='checkbox'><label><input type='checkbox' class='completed' value='' /><span class='name'>" + item.Name + "</span></label></div>")
+
+        $(parentSelector).append(i);
+    }
+
+    var appendItemDone = function (parentSelector, item) {
+        var i = $("<li data-id='" + item.ToDoId + "'></li>")
+        i.append(item.Name + "<button class='btn btn-default btn-xs pull-right remove-item'><span class='glyphicon glyphicon-remove'></span></button>")
+
+        $(parentSelector).append(i);
     }
 
     // adds all tasks as rows (deletes all rows before).
     // @parentSelector: selector to append a row to.
     // @tasks: array of tasks to append.
-    var displayTasks = function(parentSelector, tasks) {
+    var displayTasks = function(parentSelector, parenSelectorDone, tasks) {
         $(parentSelector).empty();
-        $.each(tasks, function(i, item) {
-            appendRow(parentSelector, item);
+        $(parenSelectorDone).empty();
+        $.each(tasks, function (i, item) {
+            if (!item.IsCompleted) {
+                appendItem(parentSelector, item);
+            }
+            else {
+                appendItemDone(parenSelectorDone, item);
+            }
         });
     };
 
@@ -31,10 +43,9 @@
     // @isCompleted: indicates if new task should be completed.
     // @name: name of new task.
     // @return a promise.
-    var createTask = function(isCompleted, name) {
+    var createTask = function(name) {
         return $.post("/api/todos",
         {
-            IsCompleted: isCompleted,
             Name: name
         });
     };
@@ -78,47 +89,75 @@
     };
 }();
 
-
 $(function () {
-    // add new task button click handler
-    $("#newCreate").click(function() {
-        var isCompleted = $('#newCompleted')[0].checked;
-        var name = $('#newName')[0].value;
-
-        tasksManager.createTask(isCompleted, name)
-            .then(tasksManager.loadTasks)
-            .done(function(tasks) {
-                tasksManager.displayTasks("#tasks > tbody", tasks);
-            });
-    });
-
-    // bind update task checkbox click handler
-    $("#tasks > tbody").on('change', '.completed', function () {
-        var tr = $(this).parent().parent();
-        var taskId = tr.attr("data-id");
-        var isCompleted = tr.find('.completed')[0].checked;
-        var name = tr.find('.name').text();
-        
-        tasksManager.updateTask(taskId, isCompleted, name)
-            .then(tasksManager.loadTasks)
-            .done(function (tasks) {
-                tasksManager.displayTasks("#tasks > tbody", tasks);
-            });
-    });
-
-    // bind delete button click for future rows
-    $('#tasks > tbody').on('click', '.delete-button', function() {
-        var taskId = $(this).parent().parent().attr("data-id");
-        tasksManager.deleteTask(taskId)
-            .then(tasksManager.loadTasks)
-            .done(function(tasks) {
-                tasksManager.displayTasks("#tasks > tbody", tasks);
-            });
-    });
+    $("#tasks").sortable();
+    $("#tasks").disableSelection();
 
     // load all tasks on startup
     tasksManager.loadTasks()
         .done(function(tasks) {
-            tasksManager.displayTasks("#tasks > tbody", tasks);
+            tasksManager.displayTasks("#tasks", "#tasks-done", tasks);
+
+            countTodos();
         });
+
+    // add new todo
+    $('#addNewToDo').click(function () {
+
+        var name = $('#newToDoName')[0].value;
+
+        if (name != '') {
+            tasksManager.createTask(name)
+                .then(tasksManager.loadTasks)
+                .done(function (tasks) {
+                    tasksManager.displayTasks("#tasks", "tasks-done", tasks);
+
+                    countTodos();
+                });
+
+            $('#newToDoName').val('');
+        }
+    
+    });
+
+    // mark task as done
+    $('#tasks').on('change', '.completed', function () {
+
+        if ($(this).prop('checked')) {
+
+            var li = $(this).parent().parent().parent();
+            var taskId = li.attr("data-id");
+            var isCompleted = li.find('.completed')[0].checked;
+            var name = li.find('.name').text();
+
+            tasksManager.updateTask(taskId, isCompleted, name)
+                .then(tasksManager.loadTasks)
+                .done(function (tasks) {
+                    tasksManager.displayTasks("#tasks", "#tasks-done", tasks);
+
+                    countTodos();
+                });
+        }
+    });
+
+    // remove done task
+    $('#tasks-done').on('click', '.remove-item', function () {
+        var taskId = $(this).parent().attr("data-id");
+        tasksManager.deleteTask(taskId)
+            .then(tasksManager.loadTasks)
+            .done(function(tasks) {
+                tasksManager.displayTasks("#tasks", "#tasks-done", tasks);
+
+                countTodos()
+            });
+    });
+
+    // count todos and done todoes
+    function countTodos() {
+        var count = $("#tasks li").length;
+        $('.count-todos').html(count);
+        var countDone = $("#tasks-done li").length;
+        $('.count-todos-done').html(countDone);
+    }
+
 });
