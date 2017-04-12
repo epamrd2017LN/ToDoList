@@ -27,8 +27,8 @@ namespace todoclient.Infrastructure
 
             foreach (UserModel user in users)
             {
-                IList<ToDoModel> bufferStorageTodos = todoCloudService.GetItems(user.Id);
-                IList<ToDoModel> cloudTodos = todoBufferStorageService.GetItems(user.Id);
+                IList<ToDoModel> bufferStorageTodos = todoBufferStorageService.GetItems(user.Id);
+                IList<ToDoModel> cloudTodos = todoCloudService.GetItems(user.Id);
 
                 IList<ToDoModel> deletedFromCloudTodos = bufferStorageTodos.Except(cloudTodos).ToList();
 

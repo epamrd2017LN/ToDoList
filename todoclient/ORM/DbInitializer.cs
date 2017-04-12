@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ORM
 {
-    public class DbInitializer : CreateDatabaseIfNotExists<ToDoContext>
+    public class DbInitializer : DropCreateDatabaseIfModelChanges<ToDoContext>
     {
     }
 }

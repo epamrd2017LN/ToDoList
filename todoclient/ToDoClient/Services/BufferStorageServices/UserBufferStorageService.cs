@@ -15,6 +15,7 @@ namespace todoclient.Services.BufferStorageServices
             if (db.Users.FirstOrDefault(u => u.Id == user.Id) == null)
             {
                 db.Users.Add(user.ToOrmUser());
+                db.SaveChanges();
             }
         }
 

@@ -11,7 +11,7 @@ namespace todoclient
 {
     public class WebApiApplication : System.Web.HttpApplication
     {
-        private static readonly int defaultSyncTime = 300;
+        private static readonly int defaultSyncTime = 60;
 
         protected void Application_Start()
         {

@@ -41,7 +41,10 @@ namespace todoclient.Services.BufferStorageServices
         }
         public IList<ToDoModel> GetItems(int userId)
         {
-            IList<ToDo> ormToDos = db.ToDos.Where(todo => todo.UserId == userId).ToList();
+            IList<ToDo> ormToDos = db.ToDos
+                .Where(todo => todo.UserId == userId && 
+                    todo.Status != Synchronizer.deleteOperationName)
+                .ToList();
             return ormToDos.Select(todo => todo.ToModelToDo()).ToList();
         }
 

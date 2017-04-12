@@ -37,7 +37,7 @@ namespace todoclient.Controllers
         public void Put(ToDoModel todo)
         {
             todo.UserId = userCloudService.GetOrCreateUser();
-            todoCloudService.UpdateItem(todo);
+            toDoBufferStorageService.UpdateItem(todo);
         }
 
         /// <summary>
